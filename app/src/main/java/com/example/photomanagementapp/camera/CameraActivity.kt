@@ -4,14 +4,12 @@ import android.Manifest
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
-import android.view.Surface
 import android.view.Surface.*
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -21,6 +19,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.photomanagementapp.databinding.ActivityCameraBinding
 import java.io.File
+
 
 class CameraActivity : AppCompatActivity() {
     private lateinit var binding : ActivityCameraBinding
@@ -98,12 +97,16 @@ class CameraActivity : AppCompatActivity() {
             try {
                 val cameraProvider = processCameraProvider.get()
                 val previewUseCase = Preview.Builder().build()
-                previewUseCase.setSurfaceProvider(binding.cameraPreview.surfaceProvider)
+                previewUseCase
+                    .setSurfaceProvider(binding.cameraPreview.surfaceProvider)
+
+
 
                 imageCapture = ImageCapture.Builder()
-                    .setTargetRotation(this.windowManager.defaultDisplay.rotation)
+                    .setTargetRotation(this.display?.rotation ?: ROTATION_0)
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                     .build()
+
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA,imageCapture, previewUseCase)
             }
@@ -116,12 +119,10 @@ class CameraActivity : AppCompatActivity() {
 
     fun onClickTakePicture() {
         if (checkStoragePermission()){
-            val file = getPath()
             val values : ContentValues = ContentValues()
             values.put(MediaStore.Images.Media.DATE_TAKEN , System.currentTimeMillis())
             values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
             values.put(MediaStore.Images.Media.DISPLAY_NAME, System.currentTimeMillis())
-//            values.put(MediaStore.MediaColumns.DATA, file.path)
             val outputFileOptions = ImageCapture.OutputFileOptions.Builder(applicationContext.contentResolver,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values).build()
             imageCapture.takePicture(outputFileOptions, ContextCompat.getMainExecutor(applicationContext),
@@ -133,23 +134,15 @@ class CameraActivity : AppCompatActivity() {
                     }
                     override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                         // insert your code here.
-                        Toast.makeText(applicationContext, "Successfully Saved Pic at ${file.absolutePath}",
+                        Toast.makeText(applicationContext, "Successfully Saved Pic at ${outputFileResults.savedUri.toString()}",
                             Toast.LENGTH_LONG).show()
-//                        val bmp = BitmapFactory.decodeFile(file.path)
-//                        saveImageToGallery(file.path, applicationContext)
 
                     }
                 })
         }
 
     }
-    private fun getPath(): File {
-        val file: File = File(
-            Environment.getExternalStorageDirectory()
-                .toString() + File.separator + System.currentTimeMillis() + ".png"
-        )
-        return file
-    }
+
 }
 
 val requestCodeCamera = 1
