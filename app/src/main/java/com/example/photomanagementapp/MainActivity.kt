@@ -26,7 +26,6 @@ import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var viewModel: ViewModel
     private lateinit var adapter: ImageListAdapter
     var images = mutableListOf<Image>()
     override fun onCreate(savedInstanceState: Bundle?) {
